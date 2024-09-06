@@ -12,3 +12,4 @@ tsconfig.tsbuildinfo
 /collections/
 .ansible_vault_password
 /.ansible_vault_password
+.idea
