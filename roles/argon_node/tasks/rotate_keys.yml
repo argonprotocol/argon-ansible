@@ -1,0 +1,32 @@
+---
+# curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' http://localhost:9933
+- name: Wait for the Substrate node RPC to be available
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ argon_node_rpc_port }}"
+    timeout: 300
+    state: started
+    delay: 2
+
+- name: Rotate server keys
+  ansible.builtin.uri:
+    url: http://127.0.0.1:{{ argon_node_rpc_port }}
+    method: POST
+    body_format: json
+    body: |
+      { "jsonrpc":"2.0", "method":"author_rotateKeys", "params":[], "id":1 }
+  register: rotate_keys
+  failed_when: >
+    rotate_keys.status != 200 or
+    rotate_keys.json.error is defined
+
+- name: Show rotateKeys output
+  ansible.builtin.debug:
+    var: rotate_keys
+
+- name: Save rotateKeys output
+  ansible.builtin.copy:
+    content: "{{ rotate_keys.json }}"
+    dest: /home/{{ argon_node_user }}/rotate_keys.log
+    owner: "{{ argon_node_user }}"
+    mode: "0640"

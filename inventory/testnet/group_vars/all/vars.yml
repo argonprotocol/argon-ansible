@@ -1,0 +1,12 @@
+ws_health_exporter_user: argon
+swap_enabled: true
+swap_files:
+  - path: /swapfile
+    size: 2048
+
+nginx_dhparam_size: 2048
+ntp_servers:
+  - 0.pool.ntp.org iburst
+  - 1.pool.ntp.org iburst
+  - 2.pool.ntp.org iburst
+  - 3.pool.ntp.org iburst

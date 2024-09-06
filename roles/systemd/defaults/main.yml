@@ -1,0 +1,19 @@
+---
+# It's used for naming of systemd unit files, binary files, key files etc.
+systemd_app_name: node
+# The user that will run this service
+systemd_user: argon
+
+# The path to the binary file
+systemd_binary_path: /usr/local/bin/{{ systemd_app_name }}
+
+# Args to be passed to the binary (can be an env var)
+systemd_exec_args: ""
+
+systemd_env_contents: RUST_BACKTRACE=1
+
+systemd_syslog_labels: ""
+
+# Memory limits
+systemd_memory_high: ""
+systemd_memory_max: ""

@@ -1,0 +1,22 @@
+---
+- name: Prepare | Create temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: argon_temp_dir
+  register: _temp_dir
+  check_mode: false
+  changed_when: false
+
+- name: Binary | Set variables
+  ansible.builtin.include_tasks: path.yml
+
+- name: Binary | Download Binary
+  ansible.builtin.include_tasks: binary.yml
+
+- name: Post tasks | Remove temporary directory
+  ansible.builtin.file:
+    path: "{{ _temp_dir.path }}"
+    state: absent
+  check_mode: false
+  changed_when: false
+  when: _temp_dir.path is defined

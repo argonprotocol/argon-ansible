@@ -1,0 +1,17 @@
+---
+- name: Locate/Setup Binary
+  ansible.builtin.import_role:
+    name: binary
+  vars:
+    binary_url: "{{ notary_binary_url }}"
+    binary_version: "{{ notary_version }}"
+    binary_signature: "{{ notary_binary_signature }}"
+    binary_app_name: "{{ notary_app_name }}"
+    binary_user_name: "{{ notary_user }}"
+
+- name: Migrate PostgreSQL
+  ansible.builtin.shell: |
+    {{ binary_file }} migrate --db-url {{ notary_db_url }}
+  when: (did_install_new_version is defined and did_install_new_version) or notary_force_reinstall
+  register: migration_result
+  changed_when: migration_result.stdout != '' or migration_result.rc != 0

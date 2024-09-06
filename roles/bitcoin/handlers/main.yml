@@ -1,0 +1,5 @@
+---
+- name: Bitcoind | Ensure bitcoind systemd unit is restarted
+  ansible.builtin.systemd:
+    name: bitcoind.service
+    state: restarted

@@ -1,0 +1,18 @@
+---
+prometheus_rollup_nginx_user: prometheus
+prometheus_rollup_nginx_password: prometheus_rollup_nginx_password
+
+prometheus_rollup_exporter_port: 8000
+prometheus_rollup_substrate_export_port: 9615
+prometheus_rollup_nginx_export_port: 9113
+prometheus_rollup_haproxy_export_port: 8081
+prometheus_rollup_ws_export_port: 8001
+prometheus_rollup_node_export_port: 9101
+
+prometheus_rollup_node_exporter_version: 1.8.2
+prometheus_rollup_node_exporter_binary_url: https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_rollup_node_exporter_version }}/node_exporter-{{
+  prometheus_rollup_node_exporter_version }}.linux-amd64.tar.gz
+prometheus_rollup_node_exporter_binary_checksum: sha256:6809dd0b3ec45fd6e992c19071d6b5253aed3ead7bf0686885a51d85c6643c66
+
+prometheus_rollup_ws_rpc_port: 9944
+prometheus_rollup_ws_health_exporter_enabled: true

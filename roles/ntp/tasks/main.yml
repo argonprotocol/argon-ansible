@@ -1,0 +1,37 @@
+---
+- name: Update apt cache
+  become: true
+  ansible.builtin.apt:
+    cache_valid_time: 3600
+    update_cache: true
+  when:
+    - ansible_pkg_mgr == "apt"
+
+- name: Remove ntp legacy daemon on Linux
+  become: true
+  ansible.builtin.package:
+    name: ntp
+    state: absent
+
+- name: Install ntpsec daemon on Linux
+  become: true
+  ansible.builtin.package:
+    name: ntpsec
+    state: present
+
+- name: Service ntp on Linux
+  become: true
+  ansible.builtin.systemd:
+    name: ntpsec
+    enabled: true
+    state: started
+
+- name: Setting up ntp config
+  become: true
+  ansible.builtin.template:
+    src: templates/ntp.conf.j2
+    dest: /etc/ntpsec/ntp.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart ntp daemons on {{ ansible_system }}

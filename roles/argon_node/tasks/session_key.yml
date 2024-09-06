@@ -1,0 +1,10 @@
+---
+- name: Check for existing session keys
+  ansible.builtin.find:
+    path: "{{ _argon_node_data_root_path }}/chains/argon-{{ argon_node_chain }}/keystore"
+    file_type: file
+  register: keystore_files
+
+- name: Rotate session keys if keystore is empty
+  ansible.builtin.include_tasks: rotate_keys.yml
+  when: keystore_files.matched == 0

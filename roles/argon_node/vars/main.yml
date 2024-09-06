@@ -1,0 +1,11 @@
+---
+_argon_node_data_root_path: "{% if argon_node_data_root_path != '' -%} {{ argon_node_data_root_path }}{%- else -%} {{ _user_home_path }}/.local/share/argon-node{%-
+  endif %}"
+_argon_node_memory_profiler_log_path: "{% if argon_node_memory_profiler_log_path != '' -%} {{ argon_node_memory_profiler_log_path }}{%- else -%} {{ _user_home_path
+  }}/logs{%- endif %}"
+_argon_node_memory_profiler_binary_file: "{{ _argon_node_binary_path }}/libbytehound.so"
+_argon_node_wasm_runtime_base_path: "{{ _user_home_path }}/wasm_runtime/{{ argon_node_app_name }}"
+
+_argon_node_session_keys: "{{ _user_home_path }}/.local/share/argon-node/chains"
+_argon_node_p2p_key_file: "{{ _user_home_path }}/keys/{{ argon_node_app_name }}_p2p_key"
+_argon_node_chainspec_file: "{{ _user_home_path }}/chainspecs/{{ argon_node_app_name }}_chainspec.json"

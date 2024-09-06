@@ -1,0 +1,9 @@
+---
+- name: Rotate Keys
+  hosts: all
+  become: true
+  tasks:
+    - name: Purge | import role
+      ansible.builtin.include_role:
+        name: argon_node
+        tasks_from: rotate_keys

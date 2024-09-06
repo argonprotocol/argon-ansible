@@ -1,0 +1,17 @@
+datadir={{ bitcoin_data_dir }}
+
+blockfilterindex=1 # Enable the block filter index
+chain={{ bitcoin_network }}
+disablewallet=1 # Disable the wallet functionality
+server=1 # Run as a server
+daemon=0 # Run in the background as a daemon and accept commands
+logips=0 # Do not log IP addresses
+prune=3000 # Prune the blockchain to ~1440 blocks with filters
+maxconnections=40 # Maximum number of inbound and outbound connections
+blocksonly=1 # Do not accept transactions - limits node resources
+
+[{{ bitcoin_network }}]
+rpcauth={{ bitcoin_rpcauth }}
+rpcport={{ bitcoin_rpcport }}
+rpcbind={{ bitcoin_rpcbind }}
+rpcallowip=127.0.0.1/0

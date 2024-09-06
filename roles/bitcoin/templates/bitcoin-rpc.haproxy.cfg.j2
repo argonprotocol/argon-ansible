@@ -1,0 +1,25 @@
+defaults
+  mode http
+  timeout client 10s
+  timeout connect 5s
+  timeout server 10s
+  timeout http-request 10s
+
+frontend bitcoin_rpc
+    bind *:{{ bitcoin_proxy_rpc_port }}
+    acl is_safe_method path_beg /
+    {% for method in bitcoin_rpc_allowed_methods %}
+    acl method_safe req.body -m sub "{{ method }}"
+    {% endfor %}
+
+    http-request deny if !method_safe
+    default_backend bitcoind_backend
+
+backend bitcoind_backend
+    server bitcoind 127.0.0.1:{{ bitcoin_rpcport }}
+
+frontend prometheus
+    bind 127.0.0.1:8081
+    mode http
+    http-request use-service prometheus-exporter
+    no log

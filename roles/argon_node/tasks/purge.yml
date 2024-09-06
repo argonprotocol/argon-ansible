@@ -1,0 +1,20 @@
+---
+- name: Purge | Load binary path
+  ansible.builtin.include_role:
+    name: binary
+    tasks_from: path
+  vars:
+    binary_user_name: "{{ argon_node_user }}"
+    binary_app_name: "{{ argon_node_app_name }}"
+
+- name: Purge | Stop service
+  ansible.builtin.include_role:
+    name: systemd
+    tasks_from: stop
+  vars:
+    systemd_app_name: "{{ argon_node_app_name }}"
+    systemd_app_user: "{{ argon_node_user }}"
+
+- name: Purge | Purge chain data
+  ansible.builtin.command: "{{ binary_file }} purge-chain --base-path {{ _argon_node_data_root_path }} --chain {{ argon_node_chain }} -y"
+  changed_when: true

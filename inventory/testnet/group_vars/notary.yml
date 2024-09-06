@@ -1,0 +1,18 @@
+prometheus_rollup_ws_rpc_port: 9925
+notary_embedded_db: true
+notary_extra_args: [--dev]
+notary_node_app_name: argon-notary-testnet
+notary_db_url: postgresql://postgres:postgres@localhost:5432/notary
+notary_version: "{{ version }}"
+nginx_sites:
+  - template: site-rpc.j2
+    domain: "{{ notary_domain }}"
+    ssl_issuer: letsencrypt
+    params:
+      rpc_port: 9925
+      rpc_ws_port: 9925
+
+ufw_tcp_allow:
+  - 443 # https
+  - 9925 # rpc
+  - 8000 # prometheus rollup

@@ -1,0 +1,17 @@
+---
+- name: Purge chains
+  hosts: miners
+  become: true
+  tasks:
+    - name: Purge | miner state
+      ansible.builtin.include_role:
+        name: argon_node
+        tasks_from: purge
+
+- name: Purge notary
+  hosts: notary
+  tasks:
+    - name: Purge | notary state
+      ansible.builtin.include_role:
+        name: notary
+        tasks_from: purge

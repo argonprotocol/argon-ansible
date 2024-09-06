@@ -1,0 +1,122 @@
+---
+- name: Bitcoind | Ensure dependencies are installed
+  ansible.builtin.apt:
+    update_cache: true
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - gpg
+    - dirmngr
+  # We only need to install these dependencies if we
+  # have the GPG keys to verify the SHA256SUMS file
+  when: bitcoin_pgp_builders_pub_key is defined and bitcoin_pgp_builders_pub_key | length > 0
+
+- name: HAProxy | Install HAProxy
+  ansible.builtin.apt:
+    update_cache: true
+    name: haproxy
+    state: present
+
+- name: Create bitcoin user
+  ansible.builtin.import_role:
+    name: user
+  vars:
+    user_name: "{{ bitcoin_user_name }}"
+
+- name: Bitcoind | Ensure Bitcoin data directory uses the correct permissions ('{{ bitcoin_data_dir }}')
+  ansible.builtin.file:
+    path: "{{ bitcoin_data_dir }}"
+    state: directory
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0750"
+
+- name: Bitcoind | Ensure Bitcoin bitcoin user dir uses the correct permissions ('{{ _bitcoin_dir }}')
+  ansible.builtin.file:
+    path: "{{ _bitcoin_dir }}"
+    state: directory
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0750"
+
+- name: Bitcoind | Ensure Bitcoin binary directory uses the correct permissions ('/usr/local/bitcoin-core-{{ bitcoin_version }}')
+  ansible.builtin.file:
+    path: /usr/local/bitcoin-core-{{ bitcoin_version }}
+    state: directory
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0750"
+
+- name: Bitcoind | Check if the correct version is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bitcoin-core-{{ bitcoin_version }}/bin/bitcoind
+  register: _bitcoin_installed_stat
+
+- name: HAProxy | Copy HAProxy config
+  ansible.builtin.template:
+    src: bitcoin-rpc.haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: "0644"
+  register: _haproxy_bitcoin_rpc
+
+- name: Restart HAProxy service # noqa: no-handler
+  ansible.builtin.systemd:
+    name: haproxy
+    state: restarted
+    daemon_reload: true
+    enabled: true
+  when: _haproxy_bitcoin_rpc.changed
+
+- name: Bitcoind | Install new version
+  when: not _bitcoin_installed_stat.stat.exists
+  block:
+    - name: Bitcoind | Verify Gpg
+      ansible.builtin.include_tasks: gpg.yml
+      vars:
+        gpg_user: "{{ item.name }}"
+        gpg_id: "{{ item.id }}"
+      with_items: "{{ bitcoin_pgp_builders_pub_key }}"
+      when: bitcoin_pgp_builders_pub_key is defined and bitcoin_pgp_builders_pub_key | length > 0
+
+    - name: Bitcoind | Download Bitcoin Core v{{ bitcoin_version }} into '/tmp/bitcoin-core-{{ bitcoin_version }}-{{ bitcoin_arch }}.tar.gz'
+      ansible.builtin.get_url:
+        url: https://bitcoincore.org/bin/bitcoin-core-{{ bitcoin_version }}/bitcoin-{{ bitcoin_version }}-{{ bitcoin_arch }}.tar.gz
+        dest: /tmp/bitcoin-core-{{ bitcoin_version }}-{{ bitcoin_arch }}.tar.gz
+        checksum: sha256:https://bitcoincore.org/bin/bitcoin-core-{{ bitcoin_version }}/SHA256SUMS
+        mode: "0644"
+
+    - name: Bitcoind | Unpack 'bitcoin-core-{{ bitcoin_version }}-{{ bitcoin_arch }}.tar.gz' into '/usr/local/bitcoin-core-{{ bitcoin_version }}'
+      ansible.builtin.unarchive:
+        src: /tmp/bitcoin-core-{{ bitcoin_version }}-{{ bitcoin_arch }}.tar.gz
+        dest: /usr/local/bitcoin-core-{{ bitcoin_version }}
+        remote_src: true
+        owner: "{{ bitcoin_user_name }}"
+        group: "{{ bitcoin_group_name }}"
+        extra_opts:
+          - --strip-components=1
+      notify: Bitcoind | Ensure bitcoind systemd unit is restarted
+
+- name: Create bitcoin.conf file
+  ansible.builtin.template:
+    src: bitcoin.conf.j2
+    dest: "{{ _bitcoin_dir }}/bitcoin.conf"
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0600"
+
+- name: Setup systemd file for Bitcoin Core
+  ansible.builtin.template:
+    src: bitcoind.service.j2
+    dest: /etc/systemd/system/bitcoind.service
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0644"
+
+- name: Start Bitcoin Core with systemd
+  ansible.builtin.systemd:
+    name: bitcoind.service
+    daemon_reload: true
+    enabled: true
+    state: restarted

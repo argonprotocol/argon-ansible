@@ -1,0 +1,34 @@
+---
+bitcoin_version: 27.0
+bitcoin_arch: x86_64-linux-gnu
+# Bitcoin GPG public keys. Name must match the ones found in
+# this link https://github.com/bitcoin-core/guix.sigs.
+bitcoin_pgp_builders_pub_key:
+  - id: 71A3B16735405025D447E8F274810B012346C9A6
+    name: laanwj
+  - id: E777299FC265DD04793070EB944D35F9AC3DB76A
+    name: fanquake
+
+bitcoin_data_dir: /data/bitcoin
+# Bitcoin RPC proxy port - should follow the same port as the bitcoin rpc ports
+# 18332 for testnet and 8332 for mainnet
+bitcoin_proxy_rpc_port: 8332
+
+bitcoin_rpc_allowed_methods:
+  - getblockchaininfo
+  - getnetworkinfo
+  - getindexinfo
+  - getblockcount
+  - getblockfilter
+  - getblockhash
+  - getblockheader
+  - getblock
+
+bitcoin_user_name: bitcoin
+bitcoin_group_name: bitcoin
+
+bitcoin_rpcport: 5000 # non-standard port because we are using a proxy
+bitcoin_rpcbind: 127.0.0.1
+bitcoin_rpcauth: bitcoin:658a6e4a1a26d4a32e3c26821ffec35a$be6c4b59fa2b595069cb9805fa14f6d01cbbad23f74b5916777568c411bfa0ed # bitcoin:bitcoin
+
+bitcoin_network: test

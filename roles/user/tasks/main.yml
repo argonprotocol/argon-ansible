@@ -1,0 +1,35 @@
+---
+- name: Ensure group is created
+  ansible.builtin.group:
+    name: "{{ user_name }}"
+    state: present
+
+- name: Add argon user
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    group: "{{ user_name }}"
+    append: true
+
+- name: Create user
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    shell: /sbin/nologin
+  register: _user_stat
+
+- name: Setup '_user_home_path' variable
+  ansible.builtin.set_fact:
+    _user_home_path: "{{ _user_stat.home }}"
+
+- name: Check '_user_home_path' variable 1
+  ansible.builtin.stat:
+    path: "{{ _user_home_path }}"
+  register: _user_home_path_stat
+
+- name: Check '_user_home_path' variable 2
+  ansible.builtin.fail:
+    msg: The user home dir {{ _user_home_path }} must be created!
+  when: _user_home_path_stat.stat.isdir is not defined or not _user_home_path_stat.stat.isdir
+
+- name: Print _user_home_path
+  ansible.builtin.debug:
+    var: _user_home_path

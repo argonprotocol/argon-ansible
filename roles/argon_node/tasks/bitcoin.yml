@@ -1,0 +1,15 @@
+---
+- name: Check if blockfilterindex is enabled
+  ansible.builtin.uri:
+    url: "{{ argon_node_bitcoin_rpc_url }}"
+    method: POST
+    body: '{"jsonrpc": "1.0", "id":"curltest", "method": "getindexinfo", "params": [] }'
+    body_format: json
+    return_content: true
+  register: getindexinfo_result
+
+- name: Fail if rpc doesn't support blockfilterindex
+  ansible.builtin.fail:
+    msg: The blockfilterindex is not enabled or not fully synced.
+  when:
+    - getindexinfo_result.json.result['basic block filter index'] is not defined

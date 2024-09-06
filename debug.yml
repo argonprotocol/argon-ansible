@@ -1,0 +1,9 @@
+---
+- name: Output logs
+  hosts: "{{ target  | default('all') }}"
+  become: true
+  tasks:
+    - name: Purge | import role
+      ansible.builtin.include_role:
+        name: systemd
+        tasks_from: output

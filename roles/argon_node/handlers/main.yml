@@ -1,0 +1,6 @@
+---
+- name: Restart service argon node
+  ansible.builtin.include_tasks: tasks/restart.yml
+
+- name: Health check argon node
+  ansible.builtin.include_tasks: tasks/health.yml

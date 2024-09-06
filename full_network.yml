@@ -1,0 +1,45 @@
+---
+- name: Build Bitcoin Node
+  hosts: bitcoin
+  become: true
+  roles:
+    - role: buluma.swap
+    - role: prometheus_rollup
+    - role: bitcoin
+    - role: firewall
+
+- name: Build Miners
+  hosts: miners
+  become: true
+  roles:
+    - role: buluma.swap
+    - role: paritytech.chain.nginx
+    - role: prometheus_rollup
+    - role: ntp
+    - role: argon_node
+    - role: firewall
+
+- name: Build Notary
+  hosts: notary
+  become: true
+  roles:
+    - role: buluma.swap
+    - role: paritytech.chain.nginx
+    - role: prometheus_rollup
+    - role: ntp
+    - role: notary
+    - role: firewall
+
+- name: Build Bitcoin Oracle
+  hosts: bitcoin_oracle
+  become: true
+  roles:
+    - role: oracle
+    - role: firewall
+
+- name: Build Pricing Oracle
+  hosts: pricing_oracle
+  become: true
+  roles:
+    - role: oracle
+    - role: firewall

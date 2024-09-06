@@ -1,0 +1,14 @@
+driftfile {{ ntp_driftfile }}
+
+{% if ntp_leap %}
+# Leap seconds definition provided by tzdata
+leapfile {{ ntp_leapfile }}
+{% endif %}
+
+{% for restrict_ip in ntp_restrict %}
+restrict {{ restrict_ip }}
+{% endfor %}
+
+{% for pool_server in ntp_servers %}
+server {{ pool_server }}
+{% endfor %}

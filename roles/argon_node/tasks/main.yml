@@ -1,0 +1,53 @@
+---
+- name: Node | Tests
+  ansible.builtin.include_tasks: validate.yml
+
+# It will only be run if the systemd service state is 'running'.
+# It should help to avoid the situation when we try to update a broken node.
+- name: Node | Check the node state before deploying
+  ansible.builtin.include_tasks: health.yml
+  vars:
+    _argon_node_pre_check: true
+
+- name: Binary | Download + Install
+  ansible.builtin.include_role:
+    name: binary
+  vars:
+    binary_url: "{{ argon_node_binary_url }}"
+    binary_version: "{{ argon_node_version }}"
+    binary_signature: "{{ argon_node_binary_signature }}"
+    binary_user_name: "{{ argon_node_user }}"
+    binary_app_name: "{{ argon_node_app_name }}"
+
+- name: Binary | Export Facts
+  ansible.builtin.set_fact:
+    _argon_node_binary_dir: "{{ binary_dir }}"
+    _argon_node_commit_hash: "{{ binary_commit_hash }}"
+
+- name: Binary | Create annotation in Prometheus
+  when: argon_node_prometheus_file_exporter_path != ''
+  ansible.builtin.template:
+    src: annotation.j2
+    dest: "{{ argon_node_prometheus_file_exporter_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Node | Test Bitcoin Url
+  ansible.builtin.include_tasks: bitcoin.yml
+
+- name: Node | Memory profiler
+  ansible.builtin.include_tasks: memory_profiler.yml
+  when: argon_node_memory_profiler_enable | bool
+
+- name: Node | Chain
+  ansible.builtin.include_tasks: chain.yml
+
+- name: Node | Systemd
+  ansible.builtin.include_tasks: service.yml
+
+- name: Node | Insert Session Key
+  ansible.builtin.include_tasks: session_key.yml
+
+- name: Node | Restart
+  ansible.builtin.include_tasks: restart.yml

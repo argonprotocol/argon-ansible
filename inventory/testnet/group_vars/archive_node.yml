@@ -1,0 +1,12 @@
+argon_node_enable_rpc: true
+argon_node_pruning: 0 # don't prune
+argon_node_compute_miners: 0 # disable from compute mining
+argon_node_enable_bootnode: true
+nginx_sites:
+  - template: site-rpc.j2
+    domain: "{{ archive_node_rpc_host }}"
+    ssl_issuer: letsencrypt
+ufw_tcp_allow:
+  - 30333 # p2p
+  - 443 # https
+  - 8000 # prometheus rollup

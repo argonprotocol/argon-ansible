@@ -1,0 +1,21 @@
+---
+# Url to the binary file
+binary_url: ""
+
+# Re-download the binary file even if it exists
+binary_force_download: false
+
+# Name of the binary file locally
+binary_app_name: argon
+
+binary_main_bin: app
+
+# The version that should be installed
+binary_version: ""
+
+binary_user: argon
+
+# ID of the GPG public key that is used for signing the argon binaries
+binary_release_key_id: ""
+# GPG signature URL. When left empty, binary verification will not be executed
+binary_signature: ""

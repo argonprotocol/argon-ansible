@@ -1,0 +1,47 @@
+---
+- name: Journald config
+  ansible.builtin.include_tasks: journal.yml
+
+- name: User and group
+  ansible.builtin.import_role:
+    name: user
+  vars:
+    user_name: "{{ systemd_user }}"
+
+- name: Systemd | build {{ systemd_app_name }} environment variable file
+  ansible.builtin.template:
+    src: env.j2
+    owner: "{{ systemd_user }}"
+    group: "{{ systemd_user }}"
+    dest: /etc/default/{{ systemd_app_name }}
+    mode: "0600"
+  register: _env_file_result
+
+- name: Systemd | build {{ systemd_app_name }} systemd unit file
+  ansible.builtin.template:
+    src: systemd_unit.j2
+    dest: /etc/systemd/system/{{ systemd_app_name }}.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: _systemd_unit_file_result
+
+# to avoid 2 restarts during the first deploy
+- name: Systemd | Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Systemd | Start {{ systemd_app_name }} service
+  ansible.builtin.systemd:
+    name: "{{ systemd_app_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  register: _systemd_result
+
+- name: Systemd | Restart {{ systemd_app_name }} service
+  ansible.builtin.systemd:
+    name: "{{ systemd_app_name }}"
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  when: (_env_file_result.changed or _systemd_unit_file_result.changed) and not _systemd_result.changed

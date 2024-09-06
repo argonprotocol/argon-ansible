@@ -1,0 +1,6 @@
+---
+- name: Restart ntp daemons on Linux
+  become: true
+  ansible.builtin.systemd:
+    name: ntpsec
+    state: restarted

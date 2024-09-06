@@ -1,0 +1,3 @@
+---
+- name: Restart service {{ systemd_app_name }}
+  ansible.builtin.include_tasks: tasks/restart.yml

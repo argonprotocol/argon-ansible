@@ -1,0 +1,8 @@
+---
+- name: Restart | Restart service
+  ansible.builtin.systemd:
+    name: "{{ argon_node_app_name }}"
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  ignore_errors: true

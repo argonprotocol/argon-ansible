@@ -1,0 +1,24 @@
+[Unit]
+Description=Bitcoin's distributed currency daemon
+After=network.target
+
+[Service]
+User={{ bitcoin_user_name }}
+Group={{ bitcoin_group_name }}
+
+Type=simple
+ExecStart=/usr/local/bitcoin-core-{{ bitcoin_version }}/bin/bitcoind -conf={{ _bitcoin_dir }}/bitcoin.conf
+
+# Redirect stdout and stderr to journal
+StandardOutput=journal
+StandardError=journal
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

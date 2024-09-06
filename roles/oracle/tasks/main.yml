@@ -1,0 +1,44 @@
+---
+- name: Oracle | Test role
+  ansible.builtin.fail:
+    msg: The 'oracle_role' variable must be 'bitcoin' or 'price-index'
+  when: oracle_role is not defined or (oracle_role != 'bitcoin' and oracle_role != 'price-index')
+
+- name: Oracle | Bitcoin requires rpc-url
+  ansible.builtin.fail:
+    msg: The 'oracle_bitcoin_rpc_url' must be defined for the bitcoin role
+  when: oracle_role == 'bitcoin' and (oracle_bitcoin_rpc_url is not defined or oracle_bitcoin_rpc_url == '')
+
+- name: Binary | Download + Install
+  ansible.builtin.include_role:
+    name: binary
+  vars:
+    binary_url: "{{ oracle_binary_url }}"
+    binary_version: "{{ oracle_version }}"
+    binary_signature: "{{ oracle_binary_signature }}"
+    binary_app_name: "{{ oracle_app_name }}"
+    binary_user_name: "{{ oracle_user }}"
+
+- name: Systemd | build {{ oracle_app_name }} systemd unit file
+  ansible.builtin.import_role:
+    name: systemd
+  vars:
+    systemd_app_name: "{{ oracle_app_name }}"
+    systemd_binary_path: "{{ binary_file }}"
+    systemd_user: "{{ oracle_user }}"
+    systemd_exec_args: "{{ oracle_role }} $START_ARGS"
+    systemd_env_contents: |
+      RUST_BACKTRACE=1
+      BLS_API_KEY={{ oracle_bls_api_key }}
+      START_ARGS="\
+          --trusted-rpc-url {{ oracle_mainchain_rpc_url }} \
+          {% if oracle_signer_address %}
+          --signer-address {{ oracle_signer_address }} \
+          --signer-crypto {{ oracle_signer_crypto }}" \
+          {% endif %}
+          {% if oracle_bitcoin_rpc_url and oracle_role == 'bitcoin' %}
+          --bitcoin-rpc-url {{ oracle_bitcoin_rpc_url }} \
+          {% endif %}
+          {% for arg in oracle_extra_args %}
+          {{ arg }} \
+          {% endfor %}"

@@ -1,0 +1,15 @@
+---
+- name: Restart Service
+  hosts: "{{ target  | default('all') }}"
+  become: true
+  vars:
+    service: "argon-node"
+    user: "argon"
+  tasks:
+    - name: Purge | import role
+      ansible.builtin.include_role:
+        name: systemd
+        tasks_from: restart
+      vars:
+        systemd_app_name: "{{ service }}"
+        systemd_app_user: "{{ user | default('argon') }}"

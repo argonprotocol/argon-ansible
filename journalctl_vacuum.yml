@@ -1,0 +1,11 @@
+---
+- name: Vacuum Journalctl
+  hosts: "{{ target  | default('all') }}"
+  become: true
+  vars:
+    journalctl_vacuum_time: 1d
+  tasks:
+    - name: Purge | import role
+      ansible.builtin.include_role:
+        name: systemd
+        tasks_from: vacuum

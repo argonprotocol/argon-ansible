@@ -1,0 +1,23 @@
+---
+- name: Systemd | Check the systemd unit file exists
+  ansible.builtin.stat:
+    path: "{{ _systemd_unit_file }}"
+  register: _systemd_unit_file_stat
+
+- name: Binary | Check if service exists
+  ansible.builtin.systemd:
+    name: "{{ systemd_app_name }}"
+    daemon_reload: true
+  register: service_status
+  ignore_errors: true
+
+- name: Systemd | Stop service
+  ansible.builtin.systemd:
+    name: "{{ systemd_app_name }}"
+    state: stopped
+  when:
+    - service_status.status is defined
+    - service_status.status.LoadState == 'loaded'
+    - service_status.status.ActiveState != 'inactive'
+    - _systemd_unit_file_stat is defined and _systemd_unit_file_stat.stat.exists
+  ignore_errors: "{{ ansible_check_mode }}"

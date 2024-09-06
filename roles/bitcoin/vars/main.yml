@@ -1,0 +1,2 @@
+---
+_bitcoin_dir: "{{ _user_home_path }}/.bitcoin"

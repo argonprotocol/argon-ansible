@@ -1,0 +1,40 @@
+---
+- name: Install PostgreSQL
+  ansible.builtin.include_tasks: postgres.yml
+  when: notary_embedded_db | bool
+
+- name: Binary | Download + Install
+  ansible.builtin.include_role:
+    name: binary
+  vars:
+    binary_url: "{{ notary_binary_url }}"
+    binary_version: "{{ notary_version }}"
+    binary_signature: "{{ notary_binary_signature }}"
+    binary_app_name: "{{ notary_app_name }}"
+    binary_user_name: "{{ notary_user }}"
+
+- name: Migrate database
+  ansible.builtin.include_tasks: migrate.yml
+
+- name: Systemd | build {{ notary_app_name }} systemd unit file
+  ansible.builtin.import_role:
+    name: systemd
+  vars:
+    systemd_app_name: "{{ notary_app_name }}"
+    systemd_binary_path: "{{ binary_file }}"
+    systemd_user: "{{ notary_user }}"
+    systemd_exec_args: run $START_ARGS
+    systemd_env_contents: |
+      RUST_BACKTRACE=1
+      RUST_LOG=info
+
+      START_ARGS="\
+          --db-url {{ notary_db_url }} \
+          --trusted-rpc-url {{ notary_mainchain_rpc_url | quote }} \
+      {% for option in notary_extra_args %}
+          {{ option }} \
+      {% endfor %}
+          --notary-id {{ notary_id }} \
+          --bind-addr {{ notary_bind_addr }} \
+          --sync-blocks \
+          --finalize-notebooks"

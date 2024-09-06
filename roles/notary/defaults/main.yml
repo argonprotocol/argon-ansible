@@ -1,0 +1,35 @@
+---
+notary_embedded_db: false
+
+# It's used for naming of systemd unit files, binary files, key files etc.
+notary_app_name: argon-notary
+# A notary will be ran with permissions of this user
+notary_user: argon
+
+# The address to bind to
+notary_bind_addr: 127.0.0.1:9925
+
+# The mainchain rpc url to connect to
+notary_mainchain_rpc_url: ""
+
+notary_force_reinstall: false
+
+# what notary id to register
+notary_id: 1
+
+# Pass extra args to the notary binary
+notary_extra_args: []
+notary_db_url: postgresql://postgres:postgres@localhost:5432/notary
+
+### Binary
+notary_version: 0.0.1
+notary_binary_url: https://github.com/argonprotocol/mainchain/releases/download/v{{ notary_version }}/argon-notary-v{{ notary_version }}-x86_64-unknown-linux-gnu.tar.gz
+
+# ID of the GPG public key that is used for signing the argon binaries
+notary_binary_release_key_id: ""
+# GPG signature URL. When left empty, binary verification will not be executed
+notary_binary_signature: ""
+
+### Systemd preferences
+notary_memory_high: 7900M
+notary_memory_max: 8000M

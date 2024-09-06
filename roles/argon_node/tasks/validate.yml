@@ -1,0 +1,27 @@
+---
+- name: Test | Must have a bitcoin_rpc_url
+  ansible.builtin.fail:
+    msg: The 'argon_node_bitcoin_rpc_url' variable can't be empty!
+  when: argon_node_bitcoin_rpc_url == ''
+
+- name: Test | Check argon_node_app_name
+  ansible.builtin.fail:
+    msg: The 'argon_node_app_name' variable can't be empty!
+  when: argon_node_app_name == ''
+
+- name: Test | Check argon_node_chain
+  ansible.builtin.fail:
+    msg: The 'argon_node_chain' variable can't be empty!
+  when:
+    - argon_node_chain == ''
+    - argon_node_chainspec == ''
+
+- name: Test | Check argon_node_app_name
+  ansible.builtin.fail:
+    msg: The 'argon_node_app_name' variable can contain only '0-9a-zA-Z_-' symbols!
+  when: argon_node_app_name is regex('[^0-9a-zA-Z_-]+')
+
+- name: Test | Check number of executions in play
+  ansible.builtin.fail:
+    msg: "If you execute {{ ansible_role_name }} role multiple time in one play, please set argon_node_handler_id "
+  when: ansible_play_role_names | regex_findall(ansible_role_name) | length > 1 and argon_node_handler_id == ''

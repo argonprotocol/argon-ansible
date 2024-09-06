@@ -1,0 +1,23 @@
+---
+- name: Memory profiler | Print _argon_node_memory_profiler_log_path
+  ansible.builtin.debug:
+    var: _argon_node_memory_profiler_log_path
+
+- name: Memory profiler | Create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ argon_node_user }}"
+    group: "{{ argon_node_user }}"
+  loop:
+    - "{{ _argon_node_memory_profiler_log_path }}"
+
+- name: Memory profiler | Download
+  ansible.builtin.unarchive:
+    src: "{{ argon_node_memory_profiler_binary }}"
+    dest: "{{ _argon_node_binary_dir }}"
+    remote_src: true
+    owner: "{{ argon_node_user }}"
+    group: "{{ argon_node_user }}"
+    mode: "0640"

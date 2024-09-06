@@ -1,0 +1,32 @@
+---
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Configure UFW rules
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop: "{{ ufw_rules }}"
+  when: ufw_rules is defined
+
+- name: Configure Tcp rules
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ ufw_tcp_allow }}"
+  when: ufw_tcp_allow is defined
+
+- name: Ensure Ssh is active
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+  when: ufw_disable_ssh is not defined
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled

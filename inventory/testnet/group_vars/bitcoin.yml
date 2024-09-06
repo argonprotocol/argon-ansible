@@ -1,0 +1,7 @@
+bitcoin_version: 27.0
+bitcoin_network: test
+prometheus_rollup_ws_health_exporter_enabled: false
+ufw_tcp_allow:
+  - 18332 # bitcoin rpc
+  - 18333 # bitcoin p2p
+  - 8000 # prometheus rollup

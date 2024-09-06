@@ -1,0 +1,113 @@
+---
+
+# It's used for naming of systemd unit files, binary files, key files etc.
+argon_node_app_name: argon-{{ argon_node_chain }}
+# A node will be ran with permissions of this user
+argon_node_user: argon
+# if it's empty, the '(home directory of argon_node_user)/.local/share/argon-node' directory will be used
+argon_node_data_root_path: ""
+
+argon_node_version: 0.0.1
+
+### Binary
+argon_node_binary_url: https://github.com/argonprotocol/mainchain/releases/download/v{{ argon_node_version }}/argon-node-v{{ argon_node_version }}-x86_64-unknown-linux-gnu.tar.gz
+
+# ID of the GPG public key that is used for signing the argon binaries
+argon_node_binary_release_key_id: ""
+# GPG signature URL. When left empty, binary verification will not be executed
+argon_node_binary_signature: ""
+
+# How many cpus to use for mining. If empty, will default to #cpus - 1
+argon_node_compute_miners: ""
+
+# What bitcoin rpc url to use for detecting block moves. Must support blockfiltering
+argon_node_bitcoin_rpc_url: ""
+
+### Node systemd preferences
+argon_node_memory_high: "" # 7900M
+argon_node_memory_max: "" # 8000M
+
+### File used for Ansible annotation
+# File name for prometheus node-exporter textfile collector
+# Example:  /var/lib/prometheus/node-exporter/substrate.prom
+argon_node_prometheus_file_exporter_path: ""
+argon_node_prometheus_file_exporter_event: argon
+
+#####################################################################################
+# Memory profiler
+#####################################################################################
+
+argon_node_memory_profiler_enable: false
+argon_node_memory_profiler_binary: https://github.com/koute/bytehound/releases/download/0.11.0/bytehound-x86_64-unknown-linux-gnu.tgz
+# if it's empty, the '(home directory of argon_node_user)/logs' directory will be used
+argon_node_memory_profiler_log_path: ""
+argon_node_memory_profiler_log_level: info
+
+# This value (in milliseconds) decides which allocations are considered temporary.
+#
+# If an allocation lives longer than this it will be gathered; if it will be deallocated
+# within this time it will be stripped out and *not* emitted.
+#
+# For long-term profiling when searching for memory leaks we want to set this high so that
+# the gathered data file's size doesn't explode.
+#
+# The bigger this value is the higher the memory overhead of the profiler will be.
+# This is due to the fact that the profiler needs to buffer all of the allocations
+# in memory either until they get deallocated or until they'll live longer than whatever
+# threshold is set here.
+argon_node_memory_profiler_temporary_allocation_lifetime_threshold: "120000"
+
+### Main preferences
+# It's used for telemetry
+argon_node_public_name: "{{ inventory_hostname }}"
+# activate the rpc for the node
+argon_node_enable_rpc: false
+# Register as a boot node
+argon_node_enable_bootnode: false
+# You have to specify it in your playbook or inventory!
+argon_node_chain: ""
+# Set up name of a chainspec template file from "templates" folder or https url to file.
+# If you set up this option, the "argon_node_chain" option will be ignored
+argon_node_chainspec: ""
+# It has to be a link to wasm runtime. It will be used by the "--wasm-runtime-overrides" CLI flag
+argon_node_wasm_runtime: ""
+
+### Keys
+## p2p key
+argon_node_p2p_private_key: ""
+
+### Ports and addresses
+## p2p
+argon_node_p2p_port: "30333"
+## Add a dns name to the public address
+argon_node_p2p_public_addr_dns: ""
+argon_node_p2p_public_port: "{{ argon_node_p2p_port }}"
+# Enable discovering public IP of the node (i.e., behind NAT) and set `--public-addr` flag
+argon_node_enable_public_ip_detection: true
+## prometheus
+argon_node_prometheus_port: "9615"
+argon_node_prometheus_external_enable: true
+
+## api
+argon_node_rpc_port: "9944"
+argon_node_ws_max_connections: "100"
+
+### Node preferences
+# amount of blocks to save state in the pruning mode
+# if you need the state pruning mode the recommended (default) value is 256
+# 0 - the state pruning mode is disabled, keep the state of all blocks ('--state-pruning archive')
+argon_node_pruning: 256
+# You can specify any custom options as a list
+argon_node_custom_options: []
+#  - "--wasm-execution Compiled"
+#  - "--rpc-methods Unsafe"
+argon_node_enable_detailed_log_output: true
+
+### Logging and telemetry
+argon_node_telemetry_enable: true
+# If you set an empty value, it will use the default telemetry server
+argon_node_telemetry_url: wss://telemetry.polkadot.io/submit/ 1
+argon_node_log_trace_enable: true
+argon_node_log_trace_config: info
+# custom labels to be added to journald logs. e.g. "chain=kusama team=kusama-statemint"
+argon_node_syslog_labels: ""

@@ -1,0 +1,2 @@
+oracle_extra_args: [--dev] # adds testnet operator to the keystore
+oracle_version: "{{ version }}"

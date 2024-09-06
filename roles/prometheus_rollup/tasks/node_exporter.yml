@@ -1,0 +1,59 @@
+---
+- name: Create node_exporter download dir
+  ansible.builtin.file:
+    path: /root/node_exporter
+    state: directory
+    mode: "0755"
+
+- name: Get current node_exporter sha256
+  ansible.builtin.shell: |
+    set -o pipefail
+    sha256sum /root/node_exporter/archive.tar.gz | sed -n 's/^\(\S*\).*/sha256:\1/p'
+  args:
+    executable: /bin/bash
+  register: node_exporter_sha256
+  changed_when: false
+  ignore_errors: true
+  failed_when: false
+
+- name: Download node_exporter
+  ansible.builtin.get_url:
+    url: "{{ prometheus_rollup_node_exporter_binary_url | quote }}"
+    checksum: "{{ prometheus_rollup_node_exporter_binary_checksum | quote }}"
+    dest: /root/node_exporter/archive.tar.gz
+    mode: "0700"
+  when: node_exporter_sha256.stdout != prometheus_rollup_node_exporter_binary_checksum
+
+- name: Unarchive node_exporter
+  ansible.builtin.unarchive:
+    src: /root/node_exporter/archive.tar.gz
+    remote_src: true
+    dest: /root/node_exporter
+  when: node_exporter_sha256.stdout != prometheus_rollup_node_exporter_binary_checksum
+
+- name: Copy node_exporter binary
+  ansible.builtin.shell: |
+    set -o pipefail
+    cp /root/node_exporter/node_exporter*linux-amd64/node_exporter /usr/local/bin/
+    chmod 755 /usr/local/bin/node_exporter
+    chown root:root /usr/local/bin/node_exporter
+  args:
+    executable: /bin/bash
+  changed_when: false
+  when: node_exporter_sha256.stdout != prometheus_rollup_node_exporter_binary_checksum
+
+- name: Create node_exporter systemd unit
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: "600"
+
+- name: Start node_exporter service
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: restarted
+    daemon_reload: true
+    enabled: true
+  changed_when: false

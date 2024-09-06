@@ -1,0 +1,46 @@
+---
+- name: Install PostgreSQL server and client
+  become: true
+  ansible.builtin.package:
+    name:
+      - postgresql
+      - postgresql-client
+    state: present
+
+- name: Ensure PostgreSQL service is running and enabled
+  become: true
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Ensure the postgres user password is set
+  become: true
+  ansible.builtin.shell: |
+    sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Update PostgreSQL pg_hba.conf to allow md5 authentication for postgres user
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/postgresql/14/main/pg_hba.conf"  # Adjust this path as needed
+    insertafter: '^# IPv4 local connections:'
+    line: 'host    all             all             127.0.0.1/32            md5'
+    state: present
+
+- name: Reload PostgreSQL to apply pg_hba.conf changes
+  become: true
+  ansible.builtin.service:
+    name: postgresql
+    state: reloaded
+
+- name: Create notary database
+  become: true
+  community.postgresql.postgresql_db:
+    name: notary
+    login_user: postgres
+    login_password: postgres
+    login_host: localhost
+    state: present

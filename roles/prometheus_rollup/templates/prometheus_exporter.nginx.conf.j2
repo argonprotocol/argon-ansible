@@ -1,0 +1,27 @@
+server {
+    listen 0.0.0.0:{{ prometheus_rollup_exporter_port }};
+
+    auth_basic "Prometheus";
+    auth_basic_user_file ".htpasswd";
+
+    location /substrate-metrics {
+        proxy_pass http://localhost:{{ prometheus_rollup_substrate_export_port }}/metrics;
+    }
+
+    location /nginx-metrics {
+        proxy_pass http://localhost:{{ prometheus_rollup_nginx_export_port }}/metrics;
+    }
+
+    location /haproxy-metrics {
+        proxy_pass http://localhost:{{ prometheus_rollup_haproxy_export_port }}/metrics;
+    }
+
+    location /ws-metrics {
+        proxy_pass http://localhost:{{ prometheus_rollup_ws_export_port }}/metrics;
+    }
+
+    location /node-metrics {
+        proxy_pass http://localhost:{{ prometheus_rollup_node_export_port }}/metrics;
+    }
+
+}

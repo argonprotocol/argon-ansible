@@ -1,0 +1,2 @@
+---
+_systemd_unit_file: /etc/systemd/system/{{ systemd_app_name }}.service

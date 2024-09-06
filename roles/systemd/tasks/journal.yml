@@ -1,0 +1,16 @@
+---
+- name: Copy journald config
+  ansible.builtin.copy:
+    src: journald.conf
+    dest: /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+    daemon_reload: true
+    enabled: true
+  changed_when: false

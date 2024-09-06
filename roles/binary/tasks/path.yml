@@ -1,0 +1,44 @@
+---
+- name: Binary | Setup User
+  ansible.builtin.import_role:
+    name: user
+  vars:
+    user_name: "{{ binary_user_name }}"
+
+- name: Binary | Define binary path
+  ansible.builtin.set_fact:
+    binary_dir: "{{ _user_home_path }}/bin/{{ binary_app_name }}"
+
+- name: Binary | Define binary vars
+  ansible.builtin.set_fact:
+    update_needed: true
+    current_version: absent
+    binary_commit_hash: absent
+    binary_file: "{{ binary_dir }}/{{ binary_main_bin }}"
+
+- name: Binary | Check current binary path exists
+  ansible.builtin.stat:
+    path: "{{ binary_dir }}"
+  register: _binary_dir_stat
+
+- name: Binary | Check current binary file exists
+  ansible.builtin.stat:
+    path: "{{ binary_file }}"
+  register: _binary_file_stat
+  when: _binary_dir_stat.stat.exists and _binary_dir_stat.stat.isdir
+
+- name: Binary | Check current version
+  ansible.builtin.command: "{{ binary_dir }}/{{ binary_main_bin }} --version"
+  register: _current_version
+  when: _binary_file_stat.stat is defined and _binary_file_stat.stat.exists and _binary_file_stat.stat.isreg
+  check_mode: false
+  changed_when: false
+
+- name: Binary | Determine if update is needed
+  ansible.builtin.set_fact:
+    update_needed: "{% if _version_num.find('-') >= 0 %}{{ _version_num.split('-')[0] != binary_version }}{% else %}{{ _version_num != binary_version }}{% endif %}"
+    current_version: "{{ _version_num }}"
+    binary_commit_hash: "{% if _version_num.find('-') >= 0 %}{{ _version_num.split('-')[1] }}{% else %}absent{% endif %}"
+  vars:
+    _version_num: "{% if _current_version.stdout is defined -%}{{ _current_version.stdout.split(' ')[1] }}{% else %}absent{% endif %}"
+  when: _binary_file_stat.stat is defined and _binary_file_stat.stat.exists and _binary_file_stat.stat.isreg and binary_version != ''

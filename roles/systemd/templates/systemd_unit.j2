@@ -1,0 +1,23 @@
+[Unit]
+Description={{ systemd_app_name }} Systemd Service
+
+[Service]
+Restart=always
+RestartSec=90
+EnvironmentFile=/etc/default/{{ systemd_app_name }}
+User={{ systemd_user }}
+Group={{ systemd_user }}
+ExecStart={{ systemd_binary_path }} {{ systemd_exec_args }}
+{% if systemd_memory_high != "" %}
+MemoryHigh={{ systemd_memory_high }}
+{% endif %}
+{% if systemd_memory_max != "" %}
+MemoryMax={{ systemd_memory_max }}
+{% endif %}
+
+{% if systemd_syslog_labels != '' %}
+SyslogIdentifier={{ systemd_syslog_labels }}
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,71 @@
+---
+- name: Check if .htpasswd file already exists
+  ansible.builtin.stat:
+    path: /etc/nginx/.htpasswd
+  register: htpasswd_file
+
+- name: Remove libapr related packages
+  ansible.builtin.apt:
+    pkg:
+      - libapr1
+      - libaprutil1
+    state: absent
+    update_cache: true
+    autoremove: true
+  when: not htpasswd_file.stat.exists
+
+- name: Install apache2-utils
+  ansible.builtin.apt:
+    name: apache2-utils
+    state: present
+    update_cache: true
+  when: not htpasswd_file.stat.exists
+
+- name: Remove .htpasswd file
+  become: true
+  ansible.builtin.file:
+    state: absent
+    path: /etc/nginx/.htpasswd
+  when: htpasswd_file.stat.exists
+  check_mode: no
+  changed_when: no
+
+- name: Generate .htpasswd file
+  ansible.builtin.shell: |
+    set -o pipefail
+    htpasswd -bc /etc/nginx/.htpasswd {{ prometheus_rollup_nginx_user }} {{ prometheus_rollup_nginx_password }}
+    chmod 600 /etc/nginx/.htpasswd
+    chown www-data:www-data /etc/nginx/.htpasswd
+  changed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Install node_exporter
+  ansible.builtin.include_tasks: node_exporter.yml
+
+- name: Add nginx exports
+  ansible.builtin.include_role:
+    name: paritytech.chain.nginx_exporter
+
+- name: Add ws_health exports
+  ansible.builtin.include_role:
+    name: paritytech.chain.ws_health_exporter
+  vars:
+    ws_health_exporter_ws_urls:
+      - ws://127.0.0.1:{{ prometheus_rollup_ws_rpc_port }}
+  when: prometheus_rollup_ws_health_exporter_enabled
+
+- name: Nginx | sites | copy site configs
+  ansible.builtin.template:
+    src: prometheus_exporter.nginx.conf.j2
+    dest: /etc/nginx/sites-enabled/prometheus_exporter.nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Restart nginx service
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted
+    daemon_reload: true
+    enabled: true

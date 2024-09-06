@@ -1,0 +1,169 @@
+---
+- name: Test | Check binary
+  ansible.builtin.fail:
+    msg: The 'binary_url' variable can't be empty!
+  when: binary_url is not defined or binary_url == ''
+
+- name: Binary | Update installation
+  when: update_needed or binary_force_download
+  block:
+    - name: Binary | Set temporary binary directory
+      ansible.builtin.set_fact:
+        _temp_binary_dir: "{{ _temp_dir.path }}/bin"
+
+    - name: Binary | Set temporary binary file
+      ansible.builtin.set_fact:
+        _temp_binary_file: "{{ _temp_binary_dir }}/{{ binary_main_bin }}"
+
+    - name: Binary | Clean temp bin directory
+      ansible.builtin.file:
+        path: "{{ _temp_binary_dir }}"
+        state: absent
+      check_mode: false
+      changed_when: false
+
+    - name: Binary | Create temp bin directory
+      ansible.builtin.file:
+        path: "{{ _temp_binary_dir }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ binary_user }}"
+        group: "{{ binary_user }}"
+      check_mode: false
+      changed_when: false
+
+    - name: Binary | Download binary to temp bin directory
+      ansible.builtin.get_url:
+        url: "{{ binary_url }}"
+        dest: "{{ _temp_binary_file }}.tar.gz"
+        mode: "0755"
+        owner: root
+        group: root
+        timeout: 30
+      check_mode: false
+      changed_when: false
+
+    - name: Binary | Unarchive binary
+      ansible.builtin.unarchive:
+        src: "{{ _temp_binary_file }}.tar.gz"
+        dest: "{{ _temp_binary_dir }}"
+        remote_src: true
+        creates: "{{ _temp_binary_file }}"
+      check_mode: false
+      changed_when: false
+
+    - name: Binary | Find extracted binary
+      ansible.builtin.find:
+        paths: "{{ _temp_binary_dir }}"
+        recurse: false
+        patterns: ^(?!.*\.tar\.gz$).*
+        use_regex: true
+      register: found_binary
+
+    - name: Binary | Ensure single binary is found
+      ansible.builtin.fail:
+        msg: More than one binary found or no binaries found. Expected a single binary.
+      when: found_binary.matched != 1
+
+    - name: Binary | Rename extracted binary
+      ansible.builtin.command: mv "{{ found_binary.files[0].path }}" "{{ _temp_binary_file }}"
+      when: found_binary.matched == 1
+      changed_when: true
+
+    - name: Binary | Set executable permissions
+      ansible.builtin.file:
+        path: "{{ _temp_binary_file }}"
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Binary | GPG signature verification
+      when: binary_signature is defined and binary_signature != ''
+      block:
+        - name: Test | Check if binary_signature is a URL
+          ansible.builtin.fail:
+            msg: The 'binary_signature' variable must be a URL!
+          when: not binary_signature.startswith('http')
+
+        - name: Binary | Download GPG signatures for binaries
+          ansible.builtin.get_url:
+            url: "{{ binary_signature }}"
+            dest: "{{ _temp_binary_file }}.asc"
+            mode: "0644"
+          check_mode: false
+          changed_when: false
+          when: binary_signature != ''
+
+        - name: Binary | Import release GPG public key
+          ansible.builtin.command: |
+            gpg --keyserver hkps://keyserver.ubuntu.com --receive-keys {{ binary_release_key_id }}
+          register: _keyout
+          changed_when: "'imported' in _keyout.stderr"
+          failed_when: _keyout.rc != 0
+          check_mode: false
+
+        - name: Binary | Verify GPG signatures for binaries
+          ansible.builtin.command: |
+            gpg --verify {{ _temp_binary_file }}.asc
+          register: _verifyout
+          check_mode: false
+          changed_when: false
+          when: binary_signature != ''
+          failed_when: _verifyout.rc != 0
+
+    - name: Binary | Check new version
+      ansible.builtin.command: "{{ _temp_binary_file }} --version"
+      register: _new_version
+      check_mode: false
+      changed_when: false
+
+    - name: Binary | Setup version variables
+      ansible.builtin.set_fact:
+        _version_msg: |
+          Current version: {{ current_version }}
+          New version:     {{ new_version }}
+        binary_commit_hash: "{% if new_version.find('-') >= 0 %}{{ new_version.split('-')[1] }}{% else %}absent{% endif %}"
+        _version_equal: "{{ current_version == new_version }}"
+        did_install_new_version: "{{ current_version != new_version }}"
+      vars:
+        new_version: "{{ _new_version.stdout.split(' ')[1] }}"
+
+    - name: Binary | Print versions according to the '--version' flag
+      ansible.builtin.debug:
+        msg: "{% if _version_equal -%}Versions are equal!{%- else -%}{{ _version_msg }}{%- endif %}"
+
+    - name: Binary | Stop existing service if exists
+      ansible.builtin.include_role:
+        name: systemd
+        tasks_from: stop
+      vars:
+        systemd_app_name: "{{ binary_app_name }}"
+        systemd_app_user: "{{ binary_user }}"
+
+    - name: Binary | Remove old binary file
+      ansible.builtin.file:
+        path: "{{ binary_dir }}"
+        state: absent
+      when: _binary_file_stat is defined and _binary_dir_stat.stat.exists and not _binary_dir_stat.stat.isdir
+
+    - name: Binary | Create bin directory
+      ansible.builtin.file:
+        path: "{{ binary_dir }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ binary_user }}"
+        group: "{{ binary_user }}"
+      ignore_errors: "{{ ansible_check_mode and _binary_dir_stat is defined and _binary_dir_stat.stat.exists and not _binary_dir_stat.stat.isdir }}"
+
+    # We don't need checking of hashes. The copy module does it itself.
+    # If you have the same binary file you will see a green check in the check mode.
+    - name: Binary | Copy new binaries
+      ansible.builtin.copy:
+        src: "{{ _temp_binary_file }}"
+        dest: "{{ binary_file }}"
+        remote_src: true
+        mode: "0755"
+        owner: "{{ binary_user }}"
+        group: "{{ binary_user }}"
+      ignore_errors: "{{ ansible_check_mode and (_binary_dir_stat is not defined or (not _binary_dir_stat.stat.exists or (_binary_dir_stat.stat.exists and not _binary_dir_stat.stat.isdir)))
+        }}"

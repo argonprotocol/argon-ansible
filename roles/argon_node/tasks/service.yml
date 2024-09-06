@@ -1,0 +1,116 @@
+---
+- name: Systemd | Get public IP
+  community.general.ipify_facts:
+    timeout: 30
+  register: _argon_node_ipify_result
+  until: _argon_node_ipify_result.failed is defined and not _argon_node_ipify_result.failed
+  retries: 3
+  delay: 10
+  when: argon_node_enable_public_ip_detection | bool
+
+- name: Systemd | Print _argon_node_data_root_path
+  ansible.builtin.debug:
+    var: _argon_node_data_root_path
+
+- name: Systemd | Create directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ argon_node_user }}"
+    group: "{{ argon_node_user }}"
+  loop:
+    - "{{ _argon_node_data_root_path }}"
+
+- name: Systemd | build {{ argon_node_app_name }} systemd unit file
+  ansible.builtin.import_role:
+    name: systemd
+  vars: # noqa jinja[spacing]
+    systemd_app_name: "{{ argon_node_app_name }}"
+    systemd_binary_path: "{{ binary_file }}"
+    systemd_user: "{{ argon_node_user }}"
+    systemd_exec_args: $START_ARGS
+    systemd_memory_high: "{{ argon_node_memory_high }}"
+    systemd_memory_max: "{{ argon_node_memory_max }}"
+    systemd_syslog_identifier: "{{ argon_node_syslog_labels }}"
+    systemd_env_contents: |
+      NAME="{{ argon_node_app_name }}"
+
+      {% if argon_node_log_trace_enable %}
+      RUST_BACKTRACE=1
+      {%- endif %}
+
+      {% if argon_node_memory_profiler_enable %}
+      MEMORY_PROFILER_OUTPUT="{{ _argon_node_memory_profiler_log_path }}/profiling_%e_%t_%p.dat"
+      MEMORY_PROFILER_LOGFILE="{{ _argon_node_memory_profiler_log_path }}/profiling_%e_%t_%p.txt"
+      MEMORY_PROFILER_LOG="{{ argon_node_memory_profiler_log_level }}"
+      MEMORY_PROFILER_CULL_TEMPORARY_ALLOCATIONS="1"
+      MEMORY_PROFILER_TEMPORARY_ALLOCATION_LIFETIME_THRESHOLD="{{ argon_node_memory_profiler_temporary_allocation_lifetime_threshold }}"
+      LD_PRELOAD="{{ _argon_node_memory_profiler_binary_file }}"
+      {% endif %}
+
+      START_ARGS="\
+        --base-path {{ _argon_node_data_root_path | quote }} \
+        --prometheus-port {{ argon_node_prometheus_port }} \
+        --bitcoin-rpc-url {{ argon_node_bitcoin_rpc_url | quote }} \
+        --no-mdns \
+        --port {{ argon_node_p2p_port }} \
+        {% for option in argon_node_custom_options %}
+        {{ option }} \
+        {% endfor %}
+        {% if argon_node_chainspec != '' %}
+        --chain {{ _argon_node_chainspec_file }} \
+        {% else %}
+        --chain {{ argon_node_chain }} \
+        {% endif %}
+        {% if argon_node_enable_detailed_log_output %}
+        --detailed-log-output \
+        {% endif %}
+        {% if argon_node_public_name %}
+        --name {{ argon_node_public_name }} \
+        {% endif %}
+        {% if argon_node_p2p_private_key != '' %}
+        --node-key-file {{ _argon_node_p2p_key_file }} \
+        {% endif %}
+        {% if argon_node_enable_public_ip_detection %}
+        --public-addr=/ip4/{{ ipify_public_ip }}/tcp/{{ argon_node_p2p_public_port }} \
+          {% if argon_node_enable_bootnode %}
+        --public-addr=/ip4/{{ ipify_public_ip }}/tcp/{{ argon_node_p2p_public_port }}/ws \
+          {% endif %}
+        {% endif %}
+        {% if argon_node_p2p_public_addr_dns != '' %}
+        --public-addr=/dns/{{ argon_node_p2p_public_addr_dns }}/tcp/{{ argon_node_p2p_public_port }}  \
+          {% if argon_node_enable_bootnode %}
+        --public-addr=/dns/{{ argon_node_p2p_public_addr_dns }}/tcp/{{ argon_node_p2p_public_port }}/ws \
+          {% endif %}
+        {% endif %}
+        {% if not argon_node_telemetry_enable %}
+        --no-telemetry \
+        {% endif %}
+        {% if argon_node_telemetry_enable and argon_node_telemetry_url != '' %}
+        --telemetry-url {{ argon_node_telemetry_url | quote }} \
+        {% endif %}
+        {% if argon_node_pruning > 0 %}
+        --state-pruning={{ argon_node_pruning }} \
+        {% else %}
+        --state-pruning=archive \
+        {% endif %}
+        {% if argon_node_log_trace_enable %}
+        -l{{ argon_node_log_trace_config }} \
+        {% endif %}
+        {% if argon_node_prometheus_external_enable %}
+        --prometheus-external \
+        {% endif %}
+        {% if argon_node_compute_miners != '' %}
+        --compute-miners {{ argon_node_compute_miners }} \
+        {% endif %}
+        {% if argon_node_enable_rpc %}
+        --rpc-cors '*' \
+        --rpc-methods auto \
+        --rpc-rate-limit-trust-proxy-headers \
+        {% endif %}
+        --rpc-max-connections {{ argon_node_ws_max_connections }} \
+        --rpc-port {{ argon_node_rpc_port }} \
+        {% if argon_node_wasm_runtime != '' %}
+        --wasm-runtime-overrides {{ _argon_node_wasm_runtime_base_path }} \
+        {% endif %}"

@@ -1,0 +1,29 @@
+---
+# It's used for naming of systemd unit files, binary files, key files etc.
+oracle_app_name: argon-bitcoin-oracle
+# A binary will be ran with permissions of this user
+oracle_user: argon
+
+# The mainchain rpc url to connect to
+oracle_mainchain_rpc_url: ""
+
+# An API key to use for increased api call rates to the bls cpi website endpoints
+oracle_bls_api_key: ""
+
+# The signing address (ss58 formatted address registered in the mainchain)
+oracle_signer_address: ""
+
+# The signing type of crypto (sr25519 or ed25519)
+oracle_signer_crypto: sr25519
+
+# The bitcoin rpc url to sync blocks from
+oracle_bitcoin_rpc_url: ""
+
+# The oracle role to run (can be bitcoin or price-index)
+oracle_role: bitcoin
+
+# Extra args
+oracle_extra_args: []
+### Binary
+oracle_version: 0.0.1
+oracle_binary_url: https://github.com/argonprotocol/mainchain/releases/download/v{{ oracle_version }}/argon-oracle-v{{ oracle_version }}-x86_64-unknown-linux-gnu.tar.gz

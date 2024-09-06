@@ -1,0 +1,11 @@
+---
+- name: Journalctl vacuum
+  ansible.builtin.shell: |
+    set -o pipefail
+    journalctl --vacuum-time={{ _journalctl_vacuum_time }}
+  args:
+    executable: /bin/bash
+  vars:
+    _journalctl_vacuum_time: "{{ journalctl_vacuum_time | default('2d') }}"
+  register: _journal_vacuum_result
+  changed_when: "'Vacuuming done' in _journal_vacuum_result.stdout"

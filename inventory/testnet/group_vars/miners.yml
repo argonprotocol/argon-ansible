@@ -1,0 +1,9 @@
+argon_node_version: "{{ version }}"
+argon_node_log_trace_config: info,node=trace,runtime=trace,argon=trace
+argon_node_compute_miners: "" # if omitted, it will be set to #cpus - 1
+argon_node_prometheus_external_enable: false
+argon_node_chain: testnet
+ufw_tcp_allow:
+  - 30333 # p2p
+  - 8000 # prometheus rollup
+nginx_sites: []

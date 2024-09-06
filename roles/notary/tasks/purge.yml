@@ -1,0 +1,34 @@
+---
+- name: Purge | Load binary path
+  ansible.builtin.include_role:
+    name: binary
+    tasks_from: path
+  vars:
+    binary_user_name: "{{ notary_user }}"
+    binary_app_name: "{{ notary_app_name }}"
+
+- name: Purge | Stop service
+  ansible.builtin.include_role:
+    name: systemd
+    tasks_from: stop
+  vars:
+    systemd_app_name: "{{ notary_app_name }}"
+    systemd_app_user: "{{ notary_user }}"
+
+- name: Purge | Remove PostgreSQL database
+  become: true
+  community.postgresql.postgresql_db:
+    name: notary
+    login_user: postgres
+    login_password: postgres
+    login_host: localhost
+    state: absent
+
+- name: Purge | Rebuild PostgreSQL database
+  become: true
+  community.postgresql.postgresql_db:
+    name: notary
+    login_user: postgres
+    login_password: postgres
+    login_host: localhost
+    state: present
