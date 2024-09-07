@@ -6,8 +6,10 @@ argon_node_app_name: argon-{{ argon_node_chain }}
 argon_node_user: argon
 # if it's empty, the '(home directory of argon_node_user)/.local/share/argon-node' directory will be used
 argon_node_data_root_path: ""
-
-argon_node_version: 0.0.1
+# The version of the node
+argon_node_version: ""
+# The author of blocks
+argon_node_block_author: ""
 
 ### Binary
 argon_node_binary_url: https://github.com/argonprotocol/mainchain/releases/download/v{{ argon_node_version }}/argon-node-v{{ argon_node_version }}-x86_64-unknown-linux-gnu.tar.gz

@@ -37,4 +37,4 @@ for each role, but there isn't currently an included prometheus server to collec
     ```
    You can create a new vault config file with `ansible-vault create inventory/testnet/group_vars/all/vault.yml`
 8. Modify or replace inventory/testnet/hosts.yml with your own inventory ips, rpc urls and information.
-9. Run a playbook like `ansible-playbook -i inventory/testnet/hosts.yml full_network.yml`
+9. Run a playbook like `ansible-playbook -i inventory/testnet full_network.yml`

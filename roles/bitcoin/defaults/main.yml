@@ -11,7 +11,7 @@ bitcoin_pgp_builders_pub_key:
 
 bitcoin_data_dir: /data/bitcoin
 # Bitcoin RPC proxy port - should follow the same port as the bitcoin rpc ports
-# 18332 for testnet and 8332 for mainnet
+# 38332 for signet, 18332 for testnet and 8332 for mainnet
 bitcoin_proxy_rpc_port: 8332
 
 bitcoin_rpc_allowed_methods:

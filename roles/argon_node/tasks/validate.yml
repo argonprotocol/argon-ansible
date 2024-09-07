@@ -9,6 +9,11 @@
     msg: The 'argon_node_app_name' variable can't be empty!
   when: argon_node_app_name == ''
 
+- name: Test | Need a version
+  ansible.builtin.fail:
+    msg: The 'argon_node_version' variable can't be empty!
+  when: argon_node_version == ''
+
 - name: Test | Check argon_node_chain
   ansible.builtin.fail:
     msg: The 'argon_node_chain' variable can't be empty!

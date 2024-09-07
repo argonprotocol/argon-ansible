@@ -55,6 +55,10 @@
         --bitcoin-rpc-url {{ argon_node_bitcoin_rpc_url | quote }} \
         --no-mdns \
         --port {{ argon_node_p2p_port }} \
+        {% if argon_node_block_author != '' %}
+        --author {{ argon_node_block_author }} \
+        --validator \
+        {% endif %}
         {% for option in argon_node_custom_options %}
         {{ option }} \
         {% endfor %}

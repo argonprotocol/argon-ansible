@@ -9,6 +9,7 @@ logips=0 # Do not log IP addresses
 prune=3000 # Prune the blockchain to ~1440 blocks with filters
 maxconnections=40 # Maximum number of inbound and outbound connections
 blocksonly=1 # Do not accept transactions - limits node resources
+dbcache=1300 # Set the database cache size in MiB
 
 [{{ bitcoin_network }}]
 rpcauth={{ bitcoin_rpcauth }}
