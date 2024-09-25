@@ -1,0 +1,36 @@
+---
+- name: Bitcoin Signet | Check if the repo is already cloned
+  ansible.builtin.stat:
+    path: "{{ _bitcoin_source_dir }}"
+  register: _bitcoin_source_cloned
+
+- name: Bitcoin Signet | Download Signet runners
+  ansible.builtin.git:
+    dest: "{{ _bitcoin_source_dir }}"
+    repo: https://github.com/bitcoin/bitcoin.git
+    version: "v{{ bitcoin_version }}"
+    depth: 1
+  when: not _bitcoin_source_cloned.stat.exists
+
+- name: Bitcoin Signet | Install script
+  ansible.builtin.template:
+    src: signet_miner.sh.j2
+    dest: "{{ _bitcoin_bin_dir }}/signet_miner.sh"
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0755"
+
+- name: Setup systemd file for Bitcoin Miner
+  ansible.builtin.template:
+    src: signet_miner.service.j2
+    dest: /etc/systemd/system/signet_miner.service
+    owner: "{{ bitcoin_user_name }}"
+    group: "{{ bitcoin_group_name }}"
+    mode: "0644"
+
+- name: Start Signet Miner
+  ansible.builtin.systemd:
+    name: signet_miner.service
+    daemon_reload: true
+    enabled: true
+    state: restarted

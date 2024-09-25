@@ -1,0 +1,78 @@
+- name: Electrs | data dir
+  ansible.builtin.file:
+    path: "/data/electrs"
+    state: directory
+    mode: "0750"
+    owner: "{{ bitcoin_user_name }}"
+
+- name: Electrs | config dir
+  ansible.builtin.file:
+    path: "/etc/electrs"
+    state: directory
+    mode: "0600"
+    owner: "{{ bitcoin_user_name }}"
+
+- name: Electrs | Add Docker GPG apt Key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Electrs | Add Docker Repository
+  ansible.builtin.apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: Electrs | Update apt and install docker-ce
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  with_items:
+    - docker-ce
+    - python3-pip
+    - python3-setuptools
+    - ca-certificates
+    - curl
+
+- name: Electrs | Install Docker Module for Python
+  ansible.builtin.pip:
+    name: docker
+
+- name: Electrs | config
+  ansible.builtin.copy:
+    dest: /etc/electrs/config.toml
+    mode: "0600"
+    owner: "{{ bitcoin_user_name }}"
+    content: |
+      db_dir = "/data/electrs"
+      network = "{{ bitcoin_network }}"
+      electrum_rpc_addr = "127.0.0.1:50001"
+      cookie_file = "{{ bitcoin_data_dir }}/{{ bitcoin_network }}/.cookie"
+      daemon_rpc_addr = "127.0.0.1:{{ bitcoin_rpcport }}"
+      daemon_dir = "/data/bitcoin"
+      monitoring_addr = "127.0.0.1:4224"
+      server_banner = "{{ bitcoin_electrs_banner }}"
+      signet_magic = "{{ bitcoin_signet_magic }}"
+
+- name: Get UID and GID for the user
+  ansible.builtin.user:
+    name: "{{ bitcoin_user_name }}"
+  register: user_info
+
+- name: Print user UID and GID
+  ansible.builtin.debug:
+    msg: "UID: {{ user_info.uid }}, Group: {{ user_info.group }}"
+
+- name: Electrs | start docker
+  ansible.builtin.docker_container:
+    name: electrs
+    image: getumbrel/electrs:v0.10.2
+    state: started
+    userns_mode: "host"
+    user: "{{ user_info.uid }}:{{ user_info.group }}"
+    networks:
+      - name: host
+    volumes:
+      - "/data/bitcoin:/data/bitcoin"
+      - "/data/electrs:/data/electrs"
+      - "/etc/electrs/config.toml:/etc/electrs/config.toml"

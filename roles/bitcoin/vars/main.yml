@@ -1,2 +1,6 @@
 ---
-_bitcoin_dir: "{{ _user_home_path }}/.bitcoin"
+_bitcoin_conf_dir: "{{ _user_home_path }}/.bitcoin"
+_bitcoin_bin_dir: "/usr/local/bitcoin-core-{{ bitcoin_version }}/bin"
+_bitcoin_cli: "{{ _bitcoin_bin_dir }}/bitcoin-cli"
+_bitcoin_conf: "{{ _bitcoin_conf_dir }}/bitcoin.conf"
+_bitcoin_source_dir: "/usr/local/src/bitcoin-git"

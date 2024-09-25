@@ -23,12 +23,28 @@ bitcoin_rpc_allowed_methods:
   - getblockhash
   - getblockheader
   - getblock
+  - sendrawtransaction
+  - getrawmempool
+  - gettxout
 
 bitcoin_user_name: bitcoin
 bitcoin_group_name: bitcoin
 
+# Add an electrum server
+bitcoin_electrs_enabled: true
+# Add an electrum secure domain
+bitcoin_electrs_domain:
+
+# Signet public key challenge (https://en.bitcoin.it/wiki/Signet#Custom_Signet)
+bitcoin_signet_challenge:
+# You must specify the signet magic number from logs if you run a custom network
+bitcoin_signet_magic: 0x00f7e2b4
+bitcoin_mining_wallet: miner
+bitcoin_electrs_banner: "Argon Foundation Electrs Server"
+
 bitcoin_rpcport: 5000 # non-standard port because we are using a proxy
 bitcoin_rpcbind: 127.0.0.1
-bitcoin_rpcauth: bitcoin:658a6e4a1a26d4a32e3c26821ffec35a$be6c4b59fa2b595069cb9805fa14f6d01cbbad23f74b5916777568c411bfa0ed # bitcoin:bitcoin
+bitcoin_rpcuser: bitcoin
+bitcoin_rpcauth: 658a6e4a1a26d4a32e3c26821ffec35a$be6c4b59fa2b595069cb9805fa14f6d01cbbad23f74b5916777568c411bfa0ed # bitcoin:bitcoin
 
-bitcoin_network: test
+bitcoin_network: signet

@@ -24,4 +24,7 @@ server {
         proxy_pass http://localhost:{{ prometheus_rollup_node_export_port }}/metrics;
     }
 
+    location /electrs {
+        proxy_pass http://localhost:{{ prometheus_rollup_electrs_export_port }}/metrics;
+    }
 }

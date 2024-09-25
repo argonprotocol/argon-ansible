@@ -1,18 +1,29 @@
 datadir={{ bitcoin_data_dir }}
 
 blockfilterindex=1 # Enable the block filter index
+
+{% if bitcoin_signet_challenge %}
+txindex=1 # Enable the transaction index
+signet=1 # Enable signet mode (if you use chain, it conflicts with some rcp)
+minrelaytxfee=0.00001
+fallbackfee=0.0001
+blockmintxfee=0.00001
+{% else %}
 chain={{ bitcoin_network }}
 disablewallet=1 # Disable the wallet functionality
+blocksonly=1 # Do not accept transactions - limits node resources
+logips=0 # Do not log IP addresses
+maxconnections=40 # Maximum number of inbound and outbound connections
+{% endif %}
+
 server=1 # Run as a server
 daemon=0 # Run in the background as a daemon and accept commands
-logips=0 # Do not log IP addresses
-prune=3000 # Prune the blockchain to ~1440 blocks with filters
-maxconnections=40 # Maximum number of inbound and outbound connections
-blocksonly=1 # Do not accept transactions - limits node resources
-dbcache=1300 # Set the database cache size in MiB
 
 [{{ bitcoin_network }}]
-rpcauth={{ bitcoin_rpcauth }}
+rpcauth={{ bitcoin_rpcuser }}:{{ bitcoin_rpcauth }}
 rpcport={{ bitcoin_rpcport }}
 rpcbind={{ bitcoin_rpcbind }}
 rpcallowip=127.0.0.1/0
+{% if bitcoin_signet_challenge and bitcoin_network == "signet" %}
+signetchallenge={{ bitcoin_signet_challenge }}
+{% endif %}

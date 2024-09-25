@@ -1,0 +1,18 @@
+[Unit]
+Description=Bitcoin Signet Miner
+After=network.target
+
+[Service]
+User={{ bitcoin_user_name }}
+Group={{ bitcoin_group_name }}
+
+Type=simple
+ExecStart={{ _bitcoin_bin_dir }}/signet_miner.sh
+
+# Redirect stdout and stderr to journal
+StandardOutput=journal
+StandardError=journal
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

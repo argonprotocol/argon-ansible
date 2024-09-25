@@ -1,0 +1,37 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+###############################################
+# Create the signet challenge address and set it in the bitcoin.conf file.
+###############################################
+
+cd {{ _bitcoin_bin_dir }}
+bcli="./bitcoin-cli -regtest"
+
+echo "================================================"
+echo "Stopping bitcoind systemctl..."
+systemctl stop bitcoind.service
+echo "================================================"
+
+# Start bitcoind
+./bitcoind -regtest -daemon
+# Get wallet info with keys
+DESCRIPTORS=$($bcli listdescriptors true | jq -r .descriptors)
+
+# Create an address for the signet challenge.
+ADDR=$($bcli -named getnewaddress address_type="bech32")
+SIGNET_CHALLENGE=$($bcli -named getaddressinfo $ADDR | jq -r .scriptPubKey)
+$bcli stop
+
+echo "Signet challenge address: $SIGNET_CHALLENGE"
+echo "signetchallenge=$SIGNET_CHALLENGE" > "{{ _bitcoin_conf }}"
+echo "Signet challenge address set in {{ _bitcoin_conf }}"
+
+echo "================================================"
+echo "Restarting bitcoind systemctl..."
+systemctl start bitcoind.service
+ctl_bcli="./bitcoin-cli -conf={{ _bitcoin_conf }}"
+echo "================================================"
+echo "Creating the wallet and importing descriptors:"
+$ctl_bcli createwallet "{{ bitcoin_mining_wallet }}" 2>&1 >/dev/null
+$ctl_bcli importdescriptors "$DESCRIPTORS" 2>&1 >/dev/null

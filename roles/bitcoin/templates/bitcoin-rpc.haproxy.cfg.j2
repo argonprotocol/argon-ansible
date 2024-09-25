@@ -23,3 +23,16 @@ frontend prometheus
     mode http
     http-request use-service prometheus-exporter
     no log
+
+frontend electrs_frontend
+    {% if bitcoin_electrs_domain %}
+    bind *:50002 ssl crt /etc/haproxy/certs/{{ bitcoin_electrs_domain }}.pem
+    {% else %}
+    bind *:50002
+    {% endif %}
+    mode tcp
+    default_backend electrs_backend
+
+backend electrs_backend
+    mode tcp
+    server electrs 127.0.0.1:50001

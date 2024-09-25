@@ -8,6 +8,7 @@ prometheus_rollup_nginx_export_port: 9113
 prometheus_rollup_haproxy_export_port: 8081
 prometheus_rollup_ws_export_port: 8001
 prometheus_rollup_node_export_port: 9101
+prometheus_rollup_electrs_export_port: 4224
 
 prometheus_rollup_node_exporter_version: 1.8.2
 prometheus_rollup_node_exporter_binary_url: https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_rollup_node_exporter_version }}/node_exporter-{{

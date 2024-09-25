@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Concatenate the fullchain and privkey into the required PEM file for HAProxy
+cat /etc/letsencrypt/live/{{ bitcoin_electrs_domain }}/fullchain.pem /etc/letsencrypt/live/{{ bitcoin_electrs_domain }}/privkey.pem > /etc/haproxy/certs/{{ bitcoin_electrs_domain }}.pem
+
+# Set the correct permissions
+chown haproxy:haproxy /etc/haproxy/certs/{{ bitcoin_electrs_domain }}.pem
+chmod 600 /etc/haproxy/certs/{{ bitcoin_electrs_domain }}.pem
+
+# Reload HAProxy to apply the new certificate
+systemctl reload haproxy

@@ -1,0 +1,24 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+cd {{ _bitcoin_bin_dir }}
+bcli="./bitcoin-cli -conf={{ _bitcoin_conf }}"
+miner="{{ _bitcoin_source_dir }}/contrib/signet/miner"
+grinder="./bitcoin-util grind"
+
+echo "================================================"
+echo "Loading the wallet \"{{ bitcoin_mining_wallet }}\":"
+if ! $bcli loadwallet "{{ bitcoin_mining_wallet }}"; then
+    echo "Failed to load wallet, but continuing - assuming it is already loaded."
+fi
+echo "================================================"
+
+miner_addr=$($bcli -named getnewaddress address_type="bech32")
+
+currblock=$($bcli getblockcount)
+echo "Start mining... current blockcount: ${currblock}"
+if [ "$currblock" -le 100 ]; then
+    $miner --cli="$bcli" generate --address="$miner_addr" --grind-cmd="$grinder" --min-nbits --max-blocks=101
+fi
+
+$miner --cli="$bcli" generate --address="$miner_addr" --grind-cmd="$grinder" --min-nbits --poisson --ongoing
