@@ -1,0 +1,17 @@
+---
+- name: Insert Keys
+  hosts: "{{ target  | default('all') }}"
+  become: true
+  tasks:
+    - name: Insert | import role
+      ansible.builtin.include_role:
+        name: argon_node
+        tasks_from: setup.yml
+    - name: Session | insert key
+      ansible.builtin.include_role:
+        name: argon_node
+        tasks_from: session_key.yml
+    - name: Node | restart
+      ansible.builtin.include_role:
+        name: argon_node
+        tasks_from: restart.yml

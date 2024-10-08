@@ -6,6 +6,8 @@
     body: '{"jsonrpc": "1.0", "id":"curltest", "method": "getindexinfo", "params": [] }'
     body_format: json
     return_content: true
+  retries: 10
+  delay: 10
   register: getindexinfo_result
 
 - name: Fail if rpc doesn't support blockfilterindex

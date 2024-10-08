@@ -139,12 +139,13 @@
       vars:
         systemd_app_name: "{{ binary_app_name }}"
         systemd_app_user: "{{ binary_user }}"
+      when: did_install_new_version
 
     - name: Binary | Remove old binary file
       ansible.builtin.file:
         path: "{{ binary_dir }}"
         state: absent
-      when: _binary_file_stat is defined and _binary_dir_stat.stat.exists and not _binary_dir_stat.stat.isdir
+      when: did_install_new_version and _binary_file_stat is defined and _binary_dir_stat.stat.exists and not _binary_dir_stat.stat.isdir
 
     - name: Binary | Create bin directory
       ansible.builtin.file:
@@ -167,3 +168,4 @@
         group: "{{ binary_user }}"
       ignore_errors: "{{ ansible_check_mode and (_binary_dir_stat is not defined or (not _binary_dir_stat.stat.exists or (_binary_dir_stat.stat.exists and not _binary_dir_stat.stat.isdir)))
         }}"
+      when: did_install_new_version

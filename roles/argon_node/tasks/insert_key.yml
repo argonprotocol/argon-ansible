@@ -1,0 +1,61 @@
+---
+- name: Insert keys
+  block:
+    - name: Inject | Get Public Key
+      ansible.builtin.command: |
+        {{ binary_file }} key inspect "{{ item.priv_key }}" --scheme {{ item.scheme | default('sr25519') }} --output-type=json
+      register: key_output
+      changed_when: false
+
+    - name: Inject | Setting {{ item.type }} pub keys
+      ansible.builtin.set_fact:
+        key_inject_pub_key: "{{ key_output.stdout | from_json | json_query('publicKey') }}"
+
+    - name: Inject | Check {{ item.type }} key
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ argon_node_rpc_port }}"
+        method: POST
+        body:
+          jsonrpc: "2.0"
+          method: author_hasKey
+          params: ["{{ key_inject_pub_key }}", "{{ item.type }}"]
+          id: 1
+        body_format: json
+        headers:
+          Content-Type: application/json
+        use_proxy: false
+      changed_when: false
+      check_mode: false
+      # retries 10 times, because this role can run after node role without pause, and the node is not up yet
+      until: key_inject_uri.status is defined and key_inject_uri.status == 200
+      retries: 12
+      delay: 10
+      register: key_inject_uri
+
+    - name: Inject | Check {{ item.type }} key results
+      ansible.builtin.debug:
+        msg: Key {{ key_inject_pub_key }} ({{ item.type }}, {{ item.scheme | default('sr25519') }}) is {{ 'NOT ' if not key_inject_uri.json.result else '' }}present
+          in keystore
+      changed_when: not key_inject_uri.json.result
+
+    - name: Inject | Inject {{ item.type }} keys
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ argon_node_rpc_port }}"
+        method: POST
+        body:
+          jsonrpc: "2.0"
+          method: author_insertKey
+          params: ["{{ item.type }}", "{{ item.priv_key }}", "{{ key_inject_pub_key }}"]
+          id: 1
+        body_format: json
+        headers:
+          Content-Type: application/json
+        use_proxy: false
+      changed_when: true
+      register: key_inject_uri
+      when: not key_inject_uri.json.result
+
+    - name: Inject | Inject {{ item.type }} keys results
+      ansible.builtin.debug:
+        var: key_inject_uri
+      when: not ansible_check_mode

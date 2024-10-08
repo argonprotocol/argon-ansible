@@ -27,6 +27,8 @@
 - name: Save rotateKeys output
   ansible.builtin.copy:
     content: "{{ rotate_keys.json }}"
-    dest: /home/{{ argon_node_user }}/rotate_keys.log
+    dest: "{{ _argon_node_data_root_path }}/chains/argon-{{ argon_node_chain }}/rotate_keys.log"
     owner: "{{ argon_node_user }}"
     mode: "0640"
+    force: yes
+

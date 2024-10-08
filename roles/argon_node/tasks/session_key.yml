@@ -1,4 +1,11 @@
 ---
+- name: Check inserting session keys
+  ansible.builtin.include_tasks: insert_key.yml
+  loop: "{{ argon_node_inject_keys }}"
+  loop_control:
+    label: Argon {{ item.type }} key
+  when: argon_node_inject_keys is defined
+
 - name: Check for existing session keys
   ansible.builtin.find:
     path: "{{ _argon_node_data_root_path }}/chains/argon-{{ argon_node_chain }}/keystore"

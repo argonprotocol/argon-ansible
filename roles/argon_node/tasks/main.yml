@@ -9,20 +9,8 @@
   vars:
     _argon_node_pre_check: true
 
-- name: Binary | Download + Install
-  ansible.builtin.include_role:
-    name: binary
-  vars:
-    binary_url: "{{ argon_node_binary_url }}"
-    binary_version: "{{ argon_node_version }}"
-    binary_signature: "{{ argon_node_binary_signature }}"
-    binary_user_name: "{{ argon_node_user }}"
-    binary_app_name: "{{ argon_node_app_name }}"
-
-- name: Binary | Export Facts
-  ansible.builtin.set_fact:
-    _argon_node_binary_dir: "{{ binary_dir }}"
-    _argon_node_commit_hash: "{{ binary_commit_hash }}"
+- name: Node | Install Binary
+  ansible.builtin.include_tasks: setup.yml
 
 - name: Binary | Create annotation in Prometheus
   when: argon_node_prometheus_file_exporter_path != ''

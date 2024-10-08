@@ -15,6 +15,9 @@
     systemd_app_name: "{{ argon_node_app_name }}"
     systemd_app_user: "{{ argon_node_user }}"
 
-- name: Purge | Purge chain data
-  ansible.builtin.command: "{{ binary_file }} purge-chain --base-path {{ _argon_node_data_root_path }} --chain {{ argon_node_chain }} -y"
-  changed_when: true
+- name: Purge | Remove keychain
+  ansible.builtin.file:
+    state: absent
+    path: "{{ _argon_node_data_root_path }}/chains/argon-{{ argon_node_chain }}"
+  check_mode: no
+  changed_when: no

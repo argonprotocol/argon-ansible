@@ -35,6 +35,12 @@ argon_node_memory_max: "" # 8000M
 argon_node_prometheus_file_exporter_path: ""
 argon_node_prometheus_file_exporter_event: argon
 
+# If you want to inject a grandpa key and block seal key instead of rotating, use these parameters
+argon_node_inject_keys: []
+# - type: gran
+#   priv_key: ""
+#   scheme: ed25519
+
 #####################################################################################
 # Memory profiler
 #####################################################################################
